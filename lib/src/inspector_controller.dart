@@ -31,7 +31,8 @@ class InspectorController extends ChangeNotifier {
   }
 
   static InspectorController? _singleton;
-
+  static InspectorController get instance => _singleton!;
+  List<LoggedItem> logesList = [];
   late final bool _enabled;
   late final ShowInspectorOn _showInspectorOn;
   late final ShakeDetector _shakeDetector;
@@ -84,6 +85,12 @@ class InspectorController extends ChangeNotifier {
     if (_requestsList.isEmpty && _selectedRequest == null) return;
     _requestsList.clear();
     _selectedRequest = null;
+    notifyListeners();
+  }
+
+  void clearAllLogs() {
+    if (logesList.isEmpty) return;
+    logesList.clear();
     notifyListeners();
   }
 
@@ -143,5 +150,22 @@ class InspectorController extends ChangeNotifier {
     ];
 
     return listOfContent.join();
+  }
+
+  void addLog(LoggedItem log) {
+    logesList.add(log);
+
+    notifyListeners();
+  }
+
+  void addListLog(List<LoggedItem> log) {
+    logesList.addAll(log);
+
+    notifyListeners();
+  }
+
+  void clearLog() {
+    logesList.clear();
+    notifyListeners();
   }
 }

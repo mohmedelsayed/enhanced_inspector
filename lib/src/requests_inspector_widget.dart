@@ -1,11 +1,13 @@
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:collection/collection.dart';
 import 'package:requests_inspector/src/json_pretty_converter.dart';
+
 import '../requests_inspector.dart';
+import 'inspector_enhancment/sayed_logger.dart';
 
 ///You can show the Inspector by **Shaking** your phone.
 class RequestsInspector extends StatelessWidget {
@@ -30,15 +32,12 @@ class RequestsInspector extends StatelessWidget {
         ? ChangeNotifierProvider(
             create: (context) => InspectorController(
               enabled: enabled,
-              showInspectorOn: _isSupportShaking()
-                  ? showInspectorOn
-                  : ShowInspectorOn.LongPress,
+              showInspectorOn: _isSupportShaking() ? showInspectorOn : ShowInspectorOn.LongPress,
             ),
             builder: (context, _) {
               final inspectorController = context.read<InspectorController>();
               return WillPopScope(
-                onWillPop: () async =>
-                    inspectorController.pageController.page == 0,
+                onWillPop: () async => inspectorController.pageController.page == 0,
                 child: GestureDetector(
                   onLongPress: showInspectorOn != ShowInspectorOn.Shaking
                       ? inspectorController.showInspector
@@ -71,8 +70,7 @@ class RequestsInspector extends StatelessWidget {
     );
   }
 
-  bool _isSupportShaking() =>
-      kIsWeb ? false : Platform.isAndroid || Platform.isIOS;
+  bool _isSupportShaking() => kIsWeb ? false : Platform.isAndroid || Platform.isIOS;
 }
 
 class _Inspector extends StatelessWidget {
@@ -115,10 +113,20 @@ class _Inspector extends StatelessWidget {
                     style: TextStyle(color: Colors.white),
                   ),
                 )
-              : _RunAgainButton(
-                  key: ValueKey(inspectorController.selectedRequest.hashCode),
-                  onTap: inspectorController.runAgain,
-                ),
+              : selectedTab == 2
+                  ? TextButton(
+                      onPressed: () => _showAreYouSureDialog(context,
+                          onYes: inspectorController.clearAllLogs,
+                          title: 'This will clear all Loges from the inspector'),
+                      child: const Text(
+                        'Clear All Logs',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    )
+                  : _RunAgainButton(
+                      key: ValueKey(inspectorController.selectedRequest.hashCode),
+                      onTap: inspectorController.runAgain,
+                    ),
         ),
       ],
     );
@@ -152,6 +160,11 @@ class _Inspector extends StatelessWidget {
           isSelected: selectedTab == 1,
           onTap: () => inspectorController.selectedTab = 1,
         ),
+        _buildTabItem(
+          title: 'Sayed Logger',
+          isSelected: selectedTab == 2,
+          onTap: () => inspectorController.selectedTab = 2,
+        ),
       ],
     );
   }
@@ -181,9 +194,17 @@ class _Inspector extends StatelessWidget {
   }
 
   Widget _buildSelectedTab(BuildContext context, {required int selectedTab}) {
-    return selectedTab == 0
-        ? _buildAllRequests(context)
-        : const _RequestDetailsPage();
+    /* return selectedTab == 0 ? _buildAllRequests(context) : const _RequestDetailsPage();*/
+    switch (selectedTab) {
+      case 0:
+        return _buildAllRequests(context);
+      case 1:
+        return const _RequestDetailsPage();
+      case 2:
+        return const SayedLogger();
+      default:
+        return _buildAllRequests(context);
+    }
   }
 
   Widget _buildAllRequests(BuildContext context) {
@@ -201,8 +222,7 @@ class _Inspector extends StatelessWidget {
                   return _RequestItemWidget(
                     isSelected: inspectorController.selectedRequest == request,
                     request: request,
-                    onTap: (request) =>
-                        inspectorController.selectedRequest = request,
+                    onTap: (request) => inspectorController.selectedRequest = request,
                   );
                 },
               ),
@@ -210,16 +230,13 @@ class _Inspector extends StatelessWidget {
     );
   }
 
-  Future<void> _showAreYouSureDialog(
-    BuildContext context, {
-    required VoidCallback onYes,
-  }) {
+  Future<void> _showAreYouSureDialog(BuildContext context,
+      {required VoidCallback onYes, String? title}) {
     return showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Are you sure? 🤔'),
-        content:
-            const Text('This will clear all requests added to the inspector'),
+        content: Text(title ?? 'This will clear all requests added to the inspector'),
         actions: [
           TextButton(
             child: const Text('Yes'),
@@ -240,8 +257,7 @@ class _Inspector extends StatelessWidget {
   Widget _buildShareFloatingButton() {
     return Selector<InspectorController, bool>(
       selector: (_, inspectorController) =>
-          inspectorController.selectedTab == 1 &&
-          inspectorController.selectedRequest != null,
+          inspectorController.selectedTab == 1 && inspectorController.selectedRequest != null,
       builder: (context, showShareButton, _) => showShareButton
           ? FloatingActionButton(
               backgroundColor: Colors.black,
@@ -251,16 +267,13 @@ class _Inspector extends StatelessWidget {
                 final selectedRequest = controller.selectedRequest!;
                 final isHttp = _isHttp(selectedRequest);
 
-                final isCurl =
-                    isHttp ? await _showDialogShareType(context) : false;
+                final isCurl = isHttp ? await _showDialogShareType(context) : false;
 
                 if (isCurl == null) return;
 
                 final box = context.findRenderObject() as RenderBox?;
                 controller.shareSelectedRequest(
-                  box == null
-                      ? null
-                      : box.localToGlobal(Offset.zero) & box.size,
+                  box == null ? null : box.localToGlobal(Offset.zero) & box.size,
                   isCurl,
                 );
               })
@@ -408,8 +421,7 @@ class _RequestDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Selector<InspectorController, RequestDetails?>(
-        selector: (_, inspectorController) =>
-            inspectorController.selectedRequest,
+        selector: (_, inspectorController) => inspectorController.selectedRequest,
         shouldRebuild: (previous, next) => true,
         builder: (context, selectedRequest, _) => selectedRequest == null
             ? const Center(child: Text('No request selected'))
@@ -441,9 +453,7 @@ class _RequestDetailsPage extends StatelessWidget {
   Widget _buildBackgroundColor(index, item) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: index.isEven
-            ? const Color.fromARGB(255, 208, 208, 208)
-            : const Color(0xFFFFFFFF),
+        color: index.isEven ? const Color.fromARGB(255, 208, 208, 208) : const Color(0xFFFFFFFF),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -488,8 +498,7 @@ class _RequestDetailsPage extends StatelessWidget {
   }
 
   String _createRequestName(RequestMethod? method, String? requestName) {
-    return (method?.name == null ? '' : '${method!.name}: ') +
-        (requestName ?? 'No name');
+    return (method?.name == null ? '' : '${method!.name}: ') + (requestName ?? 'No name');
   }
 
   ///TODO: It's better to add the request duration as well!
@@ -506,8 +515,7 @@ class _RequestDetailsPage extends StatelessWidget {
 
   Iterable<Widget> _buildHeadersBlock(headers) {
     if (headers == null) return [];
-    if ((headers is Map || headers is String || headers is List) &&
-        headers.isEmpty) return [];
+    if ((headers is Map || headers is String || headers is List) && headers.isEmpty) return [];
 
     return [
       _buildTitle('Headers'),
@@ -517,9 +525,7 @@ class _RequestDetailsPage extends StatelessWidget {
 
   Iterable<Widget> _buildQueryBlock(queryParameters) {
     if (queryParameters == null) return [];
-    if ((queryParameters is Map ||
-            queryParameters is String ||
-            queryParameters is List) &&
+    if ((queryParameters is Map || queryParameters is String || queryParameters is List) &&
         queryParameters.isEmpty) return [];
 
     return [
@@ -530,8 +536,8 @@ class _RequestDetailsPage extends StatelessWidget {
 
   Iterable<Widget> _buildRequestBodyBlock(requestBody) {
     if (requestBody == null) return [];
-    if ((requestBody is Map || requestBody is String || requestBody is List) &&
-        requestBody.isEmpty) return [];
+    if ((requestBody is Map || requestBody is String || requestBody is List) && requestBody.isEmpty)
+      return [];
 
     return [
       _buildTitle('RequestBody'),
@@ -541,9 +547,7 @@ class _RequestDetailsPage extends StatelessWidget {
 
   Iterable<Widget> _buildResponseBodyBlock(responseBody) {
     if (responseBody == null) return [];
-    if ((responseBody is Map ||
-            responseBody is String ||
-            responseBody is List) &&
+    if ((responseBody is Map || responseBody is String || responseBody is List) &&
         responseBody.isEmpty) return [];
 
     return [
@@ -581,5 +585,4 @@ String _extractTimeText(DateTime sentTime) {
   return sentTimeText;
 }
 
-String _replaceLastSeparatorWithDot(String sentTimeText) =>
-    sentTimeText.replaceFirst(':', '.', 5);
+String _replaceLastSeparatorWithDot(String sentTimeText) => sentTimeText.replaceFirst(':', '.', 5);
