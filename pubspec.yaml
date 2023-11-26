@@ -17,7 +17,8 @@ dependencies:
   gql: ^1.0.0+1
   graphql: ^5.1.3
   graphql_flutter:
-    path: '/Volumes/Data 1/apps/custom_pakages/graph_ql_flutter/packages/graphql_flutter'
+#    path: '/Volumes/Data 1/apps/custom_pakages/graph_ql_flutter/packages/graphql_flutter'
+    git: 'https://github.com/mohmedelsayed/enhanced_graphql_flutter.git'
   provider: ^6.1.1
   shake: ^2.2.0
   share_plus: ^7.2.1

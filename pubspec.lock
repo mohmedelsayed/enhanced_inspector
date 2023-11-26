@@ -219,9 +219,11 @@ packages:
   graphql_flutter:
     dependency: "direct main"
     description:
-      path: "/Volumes/Data 1/apps/custom_pakages/graph_ql_flutter/packages/graphql_flutter"
-      relative: false
-    source: path
+      path: "."
+      ref: HEAD
+      resolved-ref: "85bb34a3e64ddea647da9ac59d4581fb02737b98"
+      url: "https://github.com/mohmedelsayed/enhanced_graphql_flutter.git"
+    source: git
     version: "5.2.0-beta.6"
   hive:
     dependency: transitive
