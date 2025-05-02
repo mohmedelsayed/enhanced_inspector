@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:shake/shake.dart';
+// import 'package:shake/shake.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../requests_inspector.dart';
@@ -23,11 +23,11 @@ class InspectorController extends ChangeNotifier {
     ShowInspectorOn showInspectorOn,
   )   : _enabled = enabled,
         _showInspectorOn = showInspectorOn {
-    if (_enabled && _allowShaking)
-      _shakeDetector = ShakeDetector.autoStart(
-        onPhoneShake: showInspector,
-        minimumShakeCount: 3,
-      );
+    // if (_enabled && _allowShaking)
+    //   _shakeDetector = ShakeDetector.autoStart(
+    //     onPhoneShake: showInspector,
+    //     minimumShakeCount: 3,
+    //   );
   }
 
   static InspectorController? _singleton;
@@ -35,7 +35,7 @@ class InspectorController extends ChangeNotifier {
   List<LoggedItem> logesList = [];
   late final bool _enabled;
   late final ShowInspectorOn _showInspectorOn;
-  late final ShakeDetector _shakeDetector;
+  // late final ShakeDetector _shakeDetector;
 
   final _dio = Dio(BaseOptions(validateStatus: (_) => true));
   final pageController = PageController(
@@ -135,7 +135,7 @@ class InspectorController extends ChangeNotifier {
 
   @override
   void dispose() {
-    if (_allowShaking) _shakeDetector.stopListening();
+    // if (_allowShaking) _shakeDetector.stopListening();
     super.dispose();
   }
 
